@@ -35,9 +35,9 @@ $ docker run --rm -it --net host nginx
 ### Demonstrate end to end packet flow of host mode network
 
 ```
-Host1 $ docker run -d --rm --net host chrch/netshoot netgen ip-172-31-18-122 5000
+Host1 $ docker run -d --rm --net host chrch/netshoot netgen 10.0.18.212 5000
 
-Host2 $ docker run -d --it --net host chrch/netshoot netgen ip-172-31-24-25 5000
+Host2 $ docker run -d --it --net host chrch/netshoot netgen 10.0.7.28 5000
 
 $ sudo docker run --privileged --net=host -v /:/rootfs:ro fntlnz/netcan -rootfs=/rootfs
 
