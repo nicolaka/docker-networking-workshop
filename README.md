@@ -187,162 +187,155 @@ The output above also shows that the **bridge** network is scoped locally. This 
 
 All networks created with the *bridge* driver are based on a Linux bridge (a.k.a. a virtual switch).
 
-Install the `brctl` command and use it to list the Linux bridges on your Docker host. You can do this by running `sudo apt-get install bridge-utils` on **node0**.
-
-```
-$ sudo apt-get install bridge-utils
-```
-
-Then, list the bridges on your Docker host, by running `brctl show` on **node0**.
-
-```
-$ brctl show
-bridge name    bridge id        STP enabled    interfaces
-docker0        8000.024252ed52f7    no
-```  
-
-The output above shows a single Linux bridge called **docker0**. This is the bridge that was automatically created for the **bridge** network. You can see that it has no interfaces currently connected to it.
-
-You can also use the `ip a` command on **node0** to view details of the **docker0** bridge.
-
-```
-$ ip a
-<Snip>
-3: docker0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN group default
-    link/ether 02:42:52:ed:52:f7 brd ff:ff:ff:ff:ff:ff
-    inet 172.17.0.1/16 scope global docker0
-       valid_lft forever preferred_lft forever
-```
 
 ## <a name="connect-container"></a>Step 2: Connect a container
 
 The **bridge** network is the default network for new containers. This means that unless you specify a different network, all new containers will be connected to the **bridge** network.
 
-Create a new container on **node0** by running `docker run -dt ubuntu sleep infinity`.
+Create a new bridge network on **node0** and call it `br`.
 
 ```
-$ docker run -dt ubuntu sleep infinity
-Unable to find image 'ubuntu:latest' locally
-latest: Pulling from library/ubuntu
-d54efb8db41d: Pull complete
-f8b845f45a87: Pull complete
-e8db7bf7c39f: Pull complete
-9654c40e9079: Pull complete
-6d9ef359eaaa: Pull complete
-Digest: sha256:dd7808d8792c9841d0b460122f1acf0a2dd1f56404f8d1e56298048885e45535
-Status: Downloaded newer image for ubuntu:latest
+$ docker network create -d bridge br
 846af8479944d406843c90a39cba68373c619d1feaa932719260a5f5afddbf71
 ```
 
-This command will create a new container based on the `ubuntu:latest` image and will run the `sleep` command to keep the container running in the background. You can verify our example container is up by running `docker ps` on **node0**.
+Now create a container called `c1` and attach it to your new `br` network.
 
 ```
-$ docker ps
-CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
-846af8479944        ubuntu              "sleep infinity"    55 seconds ago      Up 54 seconds                           heuristic_boyd
+$ docker run -itd --net br --name c1 alpine sh
+846af8479944d406843c90a39cba68373c619d1feaa932719260a5f5afddbf71
 ```
 
-As no network was specified on the `docker run` command, the container will be added to the **bridge** network.
+This command will create a new container based on the `alpine:latest` image. 
 
-Run the `brctl show` command again on **node0**.
-
-```
-$ brctl show
-bridge name    bridge id        STP enabled    interfaces
-docker0        8000.024252ed52f7    no        vethd630437
-```
-
-Notice how the **docker0** bridge now has an interface connected. This interface connects the **docker0** bridge to the new container just created.
-
-You can inspect the **bridge** network again, by running `docker network inspect bridge` on **node0**, to see the new container attached to it.
+Running `docker network inspect bridge` will show the containers on that network.
 
 ```
-$ docker network inspect bridge
-<Snip>
-        "Containers": {
-            "846af8479944d406843c90a39cba68373c619d1feaa932719260a5f5afddbf71": {
-                "Name": "heuristic_boyd",
-                "EndpointID": "1265c418f0b812004d80336bafdc4437eda976f166c11dbcc97d365b2bfa91e5",
-                "MacAddress": "02:42:ac:11:00:02",
-                "IPv4Address": "172.17.0.2/16",
-                "IPv6Address": ""
-            }
+$ docker network inspect br
+
+[
+    {
+        "Name": "br",
+        "Id": "e7b30cacc686ff891a5a5ea393e055c309a07bc652feed375821e2f78faf9aa0",
+        "Created": "2017-04-13T13:19:37.611068665Z",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": null,
+            "Config": [
+                {
+                    "Subnet": "172.17.0.0/16",
+                    "Gateway": "172.17.0.1"
+                }
+            ]
         },
-<Snip>
+        "Internal": false,
+        "Attachable": false,
+        "Containers": {
+            "086c4c0cc18c7f603279b728d9baac4b63d25941f576b37c5d1e988de6202410": {
+                "Name": "c1",
+                "EndpointID": "06eac477e1a04f2c5e676633ddab344086104511470c539a2fb7aedf8b1d58f8",
+                "MacAddress": "02:42:ac:11:00:06",
+                "IPv4Address": "172.17.0.6/16",
+                "IPv6Address": ""
 ```
+
+
 
 ## <a name="ping_local"></a>Step 3: Test network connectivity
 
-The output to the previous `docker network inspect` command shows the IP address of the new container. In the previous example it is "172.17.0.2" but yours might be different.
+The output to the previous `docker network inspect` command shows the IP address of the new container. In the previous example it is "172.17.0.6" but yours might be different.
 
-Ping the IP address of the container from the shell prompt of your Docker host by running `ping -c5 <IPv4 Address>` on **node0**. Remember to use the IP of the container in **your** environment.
+Ping the IP address of the container from the shell prompt of your Docker host by running `ping -c 3 <IPv4 Address>` on **node0**. Remember to use the IP of the container in **your** environment.
 
-```
-$ ping -c5 172.17.0.2
-PING 172.17.0.2 (172.17.0.2) 56(84) bytes of data.
-64 bytes from 172.17.0.2: icmp_seq=1 ttl=64 time=0.055 ms
-64 bytes from 172.17.0.2: icmp_seq=2 ttl=64 time=0.031 ms
-64 bytes from 172.17.0.2: icmp_seq=3 ttl=64 time=0.034 ms
-64 bytes from 172.17.0.2: icmp_seq=4 ttl=64 time=0.041 ms
-64 bytes from 172.17.0.2: icmp_seq=5 ttl=64 time=0.047 ms
-
---- 172.17.0.2 ping statistics ---
-5 packets transmitted, 5 received, 0% packet loss, time 4075ms
-rtt min/avg/max/mdev = 0.031/0.041/0.055/0.011 ms
-```
-
-The replies above show that the Docker host can ping the container over the **bridge** network. But, we can also verify the container can connect to the outside world too. Lets log into the container, install the `ping` program, and then ping `www.docker.com`.
-
-First, we need to get the ID of the container started in the previous step. You can run `docker ps` on **node0** to get that.
+You can get the IP address of the container directly from the Docker engine by running `docker inspect --format "{{ .NetworkSettings.Networks.br.IPAddress }}" c1`.
 
 ```
-$ docker ps
-CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
-846af8479944        ubuntu              "sleep infinity"    7 minutes ago       Up 7 minutes                            heuristic_boyd
+$ ping -c 3 172.17.0.6
+PING 172.17.0.6 (172.17.0.6) 56(84) bytes of data.
+64 bytes from 172.17.0.6: icmp_seq=1 ttl=64 time=0.072 ms
+64 bytes from 172.17.0.6: icmp_seq=2 ttl=64 time=0.029 ms
+64 bytes from 172.17.0.6: icmp_seq=3 ttl=64 time=0.048 ms
+...
 ```
 
-Next, lets run a shell inside that ubuntu container, by running `docker exec -it <CONTAINER ID> /bin/bash` on **node0**.
+The replies above show that the Docker host can ping the container over the **bridge** network. But, we can also verify the container can connect to the outside world too. 
+
+Enter in to the `c1` container that you created using the command `docker exec`. We will pass the `sh` command to `docker exec` which puts us in to an interactive shell inside the container.
+
+Enter in to the container and inspect the interfaces of the container
 
 ```
-$ docker exec -it 846af8479944 /bin/bash
-root@846af8479944:/#
+$ docker exec -it c1 sh
+ # ip addr show
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host
+       valid_lft forever preferred_lft forever
+879: eth0@if880: <BROADCAST,MULTICAST,UP,LOWER_UP,M-DOWN> mtu 1500 qdisc noqueue state UP
+    link/ether 02:42:ac:13:00:02 brd ff:ff:ff:ff:ff:ff
+    inet 172.19.0.6/16 scope global eth0
+       valid_lft forever preferred_lft forever
+    inet6 fe80::42:acff:fe13:2/64 scope link
+       valid_lft forever preferred_lft forever
 ```
 
-Next, we need to install the ping program. So, lets run `apt-get update && apt-get install -y iputils-ping`.
+Prove that containers can gain outside access by pinging `www.docker.com`.
 
 ```
-root@846af8479944:/# apt-get update && apt-get install -y iputils-ping
+ # ping -c 3 www.docker.com
+PING www.docker.com (104.239.220.248): 56 data bytes
+64 bytes from 104.239.220.248: seq=0 ttl=36 time=77.722 ms
+64 bytes from 104.239.220.248: seq=1 ttl=36 time=77.865 ms
+64 bytes from 104.239.220.248: seq=2 ttl=36 time=77.830 ms
 ```
 
-Lets ping www.docker.com by running `ping -c5 www.docker.com`
+Exit out of the container.
 
 ```
-root@846af8479944:/# ping -c5 www.docker.com
-PING www.docker.com (104.239.220.248) 56(84) bytes of data.
-64 bytes from 104.239.220.248: icmp_seq=1 ttl=45 time=38.1 ms
-64 bytes from 104.239.220.248: icmp_seq=2 ttl=45 time=37.3 ms
-64 bytes from 104.239.220.248: icmp_seq=3 ttl=45 time=37.5 ms
-64 bytes from 104.239.220.248: icmp_seq=4 ttl=45 time=37.5 ms
-64 bytes from 104.239.220.248: icmp_seq=5 ttl=45 time=37.5 ms
-
---- www.docker.com ping statistics ---
-5 packets transmitted, 5 received, 0% packet loss, time 4003ms
-rtt min/avg/max/mdev = 37.372/37.641/38.143/0.314 ms
+ # exit
 ```
 
-Finally, lets disconnect our shell from the container, by running `exit`.
+Now you will create a second container on this bridge so you can test connectivity between them.
 
 ```
-root@846af8479944:/# exit
+$ docker run -itd --net br --name c2 alpine sh
+75f840c9d17b2921c1e78555c97cd5116e1563b1e33f9328bd5b0a8e1c55b520
 ```
 
-We should also stop this container so we clean things up from this test, by running `docker stop <CONTAINER ID>` on **node0**.
+Enter the `c2` container with `docker exec` and try to ping the IP address of `c1`.
 
 ```
-$ docker stop 846af8479944
+$ docker exec -it c2 sh
+ # ping -c 3 172.17.0.6
+PING 172.17.0.6 (172.17.0.6): 56 data bytes
+64 bytes from 172.17.0.6: seq=0 ttl=64 time=0.091 ms
+64 bytes from 172.17.0.6: seq=1 ttl=64 time=0.077 ms
+64 bytes from 172.17.0.6: seq=2 ttl=64 time=0.079 ms
 ```
 
-This shows that the new container can ping the internet and therefore has a valid and working network configuration.
+Now ping container `c1` using it's name. The Docker engine will provide the resolution automatically for all container names and service names.
+
+
+```
+ # ping -c 3 c1
+PING c1 (172.17.0.6): 56 data bytes
+64 bytes from 172.17.0.6: seq=0 ttl=64 time=0.091 ms
+64 bytes from 172.17.0.6: seq=1 ttl=64 time=0.077 ms
+64 bytes from 172.17.0.6: seq=2 ttl=64 time=0.079 ms
+```
+
+Exit container `c2` and remove these two containers from this host.
+
+```
+# exit
+$ docker rm -f $(docker ps -aq)
+```
+
 
 
 ## <a name="nat"></a>Step 4: Configure NAT for external connectivity
