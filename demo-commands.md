@@ -39,6 +39,8 @@ Host1 $ docker run -d --rm --net host chrch/netshoot netgen ip-172-31-18-122 500
 
 Host2 $ docker run -d --it --net host chrch/netshoot netgen ip-172-31-24-25 5000
 
+$ sudo docker run --privileged --net=host -v /:/rootfs:ro fntlnz/netcan -rootfs=/rootfs
+
 $ sudo tcpdump -vvvn -i eth0 port 5000
 ```
 
