@@ -39,7 +39,9 @@ and
 $ ssh ubuntu@<node1 IP address>
 ```
 
-# <a name="Task 1"></a>Section #1 - Networking Basics
+**Note: Password will be provided during the workshop.**
+
+# <a name="task1"></a>Section #1 - Networking Basics
 
 ## <a name="list_networks"></a>Step 1: The Docker Network Command
 
@@ -164,7 +166,8 @@ Runtimes: runc
 
 The output above shows the **bridge**, **host**,**macvlan**, **null**, and **overlay** drivers.
 
-# <a name="Task #2"></a>Section #2 - Bridge Networking
+# <a name="task2"></a>Section #2 - Bridge Networking
+
 
 ## <a name="connect-container"></a>Step 1: The Basics
 
@@ -396,7 +399,7 @@ If you try and curl the IP address on a different port number it will fail.
 
 > **NOTE:** The port mapping is actually port address translation (PAT).
 
-# <a name="Task #2"></a>Section #3 - Overlay Networking
+# <a name="task3"></a>Section #3 - Overlay Networking
 
 ## <a name="connect-container"></a>Step 1: The Basics
 
@@ -450,7 +453,7 @@ Now that you have a Swarm initialized it's time to create an **overlay** network
 Create a new overlay network called "overnet" by running `docker network create -d overlay overnet` on **node0**.
 
 ```
-$ docker network create -d overlay overnet
+$ docker network create -d overlay --subnet 10.10.10.0/24 overnet
 wlqnvajmmzskn84bqbdi1ytuy
 ```
 
@@ -579,8 +582,8 @@ $ docker network inspect overnet
             "Options": null,
             "Config": [
                 {
-                    "Subnet": "10.0.0.0/24",
-                    "Gateway": "10.0.0.1"
+                    "Subnet": "10.10.10.0/24",
+                    "Gateway": "10.10.10.1"
                 }
             ]
         },
@@ -591,7 +594,7 @@ $ docker network inspect overnet
                 "Name": "myservice.1.riicggj5tutar7h7sgsvqg72r",
                 "EndpointID": "8edf83ebce77aed6d0193295c80c6aa7a5b76a08880a166002ecda3a2099bb6c",
                 "MacAddress": "02:42:0a:00:00:03",
-                "IPv4Address": "10.0.0.3/24",
+                "IPv4Address": "10.10.10.3/24",
                 "IPv6Address": ""
             }
         },
@@ -602,22 +605,22 @@ $ docker network inspect overnet
         "Peers": [
             {
                 "Name": "node0-f6a6f8e18a9d",
-                "IP": "10.0.0.5"
+                "IP": "10.10.10.5"
             },
             {
                 "Name": "node1-507a763bed93",
-                "IP": "10.0.0.6"
+                "IP": "10.10.10.6"
             }
         ]
     }
 ]
 ```
 
-You should note that as of Docker 1.12, `docker network inspect` only shows containers/tasks running on the local node. This means that `10.0.0.3` is the IPv4 address of the container running on **node1**. Make a note of this IP address for the next step (the IP address in your lab might be different than the one shown here in the lab guide).
+You should note that as of Docker 1.12, `docker network inspect` only shows containers/tasks running on the local node. This means that `10.10.10.3` is the IPv4 address of the container running on **node1**. Make a note of this IP address for the next step (the IP address in your lab might be different than the one shown here in the lab guide).
 
 ## <a name="test"></a>Step 4: Test the network
 
-To complete this step you will need the IP address of the service task running on **node1** that you saw in the previous step (`10.0.0.3`).
+To complete this step you will need the IP address of the service task running on **node1** that you saw in the previous step (`10.10.10.3`).
 
 Execute the following commands from **node0**.
 
@@ -636,8 +639,8 @@ $ docker network inspect overnet
             "Options": null,
             "Config": [
                 {
-                    "Subnet": "10.0.0.0/24",
-                    "Gateway": "10.0.0.1"
+                    "Subnet": "10.10.10.0/24",
+                    "Gateway": "10.10.10.1"
                 }
             ]
         },
@@ -648,7 +651,7 @@ $ docker network inspect overnet
                 "Name": "myservice.2.nlozn82wsttv75cs9vs3ju7vs",
                 "EndpointID": "36638a55fcf4ada2989650d0dde193bc2f81e0e9e3c153d3e9d1d85e89a642e6",
                 "MacAddress": "02:42:0a:00:00:04",
-                "IPv4Address": "10.0.0.4/24",
+                "IPv4Address": "10.10.10.4/24",
                 "IPv6Address": ""
             }
         },
@@ -659,11 +662,11 @@ $ docker network inspect overnet
         "Peers": [
             {
                 "Name": "node0-f6a6f8e18a9d",
-                "IP": "10.0.0.5"
+                "IP": "10.10.10.5"
             },
             {
                 "Name": "node1-507a763bed93",
-                "IP": "10.0.0.6"
+                "IP": "10.10.10.6"
             }
         ]
     }
@@ -688,19 +691,19 @@ $ docker exec -it d676496d18f7 /bin/bash
 root@d676496d18f7:/#
 ```
 
-Install the ping command and ping the service task running on **node1** where it had a IP address of `10.0.0.3` from the `docker network inspect overnet` command.
+Install the ping command and ping the service task running on **node1** where it had a IP address of `10.10.10.3` from the `docker network inspect overnet` command.
 
 ```
 root@d676496d18f7:/# apt-get update && apt-get install -y iputils-ping
 ```
 
-Now, lets ping `10.0.0.3`.
+Now, lets ping `10.10.10.3`.
 
 ```
-root@d676496d18f7:/# ping -c5 10.0.0.3
-PING 10.0.0.3 (10.0.0.3) 56(84) bytes of data.
+root@d676496d18f7:/# ping -c5 10.10.10.3
+PING 10.10.10.3 (10.10.10.3) 56(84) bytes of data.
 ^C
---- 10.0.0.3 ping statistics ---
+--- 10.10.10.3 ping statistics ---
 4 packets transmitted, 0 received, 100% packet loss, time 2998ms
 ```
 
@@ -730,19 +733,19 @@ Try and ping the "myservice" name from within the container by running `ping -c5
 
 ```
 root@d676496d18f7:/# ping -c5 myservice
-PING myservice (10.0.0.2) 56(84) bytes of data.
-64 bytes from 10.0.0.2: icmp_seq=1 ttl=64 time=0.020 ms
-64 bytes from 10.0.0.2: icmp_seq=2 ttl=64 time=0.052 ms
-64 bytes from 10.0.0.2: icmp_seq=3 ttl=64 time=0.044 ms
-64 bytes from 10.0.0.2: icmp_seq=4 ttl=64 time=0.042 ms
-64 bytes from 10.0.0.2: icmp_seq=5 ttl=64 time=0.056 ms
+PING myservice (10.10.10.2) 56(84) bytes of data.
+64 bytes from 10.10.10.2: icmp_seq=1 ttl=64 time=0.020 ms
+64 bytes from 10.10.10.2: icmp_seq=2 ttl=64 time=0.052 ms
+64 bytes from 10.10.10.2: icmp_seq=3 ttl=64 time=0.044 ms
+64 bytes from 10.10.10.2: icmp_seq=4 ttl=64 time=0.042 ms
+64 bytes from 10.10.10.2: icmp_seq=5 ttl=64 time=0.056 ms
 
 --- myservice ping statistics ---
 5 packets transmitted, 5 received, 0% packet loss, time 4001ms
 rtt min/avg/max/mdev = 0.020/0.042/0.056/0.015 ms
 ```
 
-The output clearly shows that the container can ping the `myservice` service by name. Notice that the IP address returned is `10.0.0.2`. In the next few steps we'll verify that this address is the virtual IP (VIP) assigned to the `myservice` service.
+The output clearly shows that the container can ping the `myservice` service by name. Notice that the IP address returned is `10.10.10.2`. In the next few steps we'll verify that this address is the virtual IP (VIP) assigned to the `myservice` service.
 
 Type the `exit` command to leave the `exec` container session and return to the shell prompt of your **node0** Docker host.
 
@@ -779,14 +782,14 @@ $ docker service inspect myservice
             "VirtualIPs": [
                 {
                     "NetworkID": "wlqnvajmmzskn84bqbdi1ytuy",
-                    "Addr": "10.0.0.2/24"
+                    "Addr": "10.10.10.2/24"
                 }
             ]
         },
 <Snip>
 ```
 
-Towards the bottom of the output you will see the VIP of the service listed. The VIP in the output above is `10.0.0.2` but the value may be different in your setup. The important point to note is that the VIP listed here matches the value returned by the `ping -c5 myservice` command.
+Towards the bottom of the output you will see the VIP of the service listed. The VIP in the output above is `10.10.10.2` but the value may be different in your setup. The important point to note is that the VIP listed here matches the value returned by the `ping -c5 myservice` command.
 
 Feel free to create a new `docker exec` session to the service task (container) running on **node1** and perform the same `ping -c5 service` command. You will get a response form the same VIP.
 
