@@ -786,6 +786,29 @@ Towards the bottom of the output you will see the VIP of the service listed. The
 
 Feel free to create a new `docker exec` session to the service task (container) running on **node1** and perform the same `ping -c5 service` command. You will get a response form the same VIP.
 
+## <a name="routingmesh"></a>Step 6: Test Routing Mesh
+
+Now let's create a service that utilizes Routing Mesh and the ingress network. Here you'll be creating a single task service that exposes port 5000 on the ingress network.
+
+```
+docker service create -p 5000:5000 --name pets --replicas=1 nicolaka/pets_web:1.0
+```
+
+Check which nodes did the task run.
+
+```
+ubuntu@node-0:~$ docker service ps pets
+ID            NAME    IMAGE                  NODE    DESIRED STATE  CURRENT STATE          ERROR  PORTS
+sqaa61qcepuh  pets.1  nicolaka/pets_web:1.0  node-0  Running        Running 4 minutes ago
+```
+
+You can see that the task is running on `node-0`, it could be `node-1` in your case. Regardless which node the task is running on, routing mesh make sure that you can connect to port `5000` on all cluster nodes and it will take care of forwarding the traffic to a healthy task. 
+
+Using your browser, go to the node where the task is NOT running on ( e.g `52.23.23.1:5000` where `52.23.23.1` is the IP of the node that the task is NOT running on).
+
+You still can see the app right? That's the power of Routing Mesh!
+
+
 ## Wrap Up
 
 Thank you for taking the time to complete this lab! Feel free to try any of the other labs.
