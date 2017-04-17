@@ -12,7 +12,7 @@ You will get your hands dirty by going through examples of a few basic networkin
 >
 > * [Prerequisites](#prerequisites)
 > * [Section #1 - Networking Basics](#task1)
-> * [Section #2 - Bridge Networkinnode0g](#task2)
+> * [Section #2 - Bridge Networking](#task2)
 > * [Section #3 - Overlay Networking](#task3)
 
 ## Document conventions
