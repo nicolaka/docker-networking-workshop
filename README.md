@@ -340,14 +340,14 @@ $ docker rm -f $(docker ps -aq)
 
 ## <a name="nat"></a>Step 4: Configure NAT for external connectivity
 
-In this step we'll start a new **NGINX** container and map port 8080 on the Docker host to port 80 inside of the container. This means that traffic that hits the Docker host on port 8080 will be passed on to port 80 inside the container.
+In this step we'll start a new **NGINX** container and map port 8000 on the Docker host to port 80 inside of the container. This means that traffic that hits the Docker host on port 8000 will be passed on to port 80 inside the container.
 
 > **NOTE:** If you start a new container from the official NGINX image without specifying a command to run, the container will run a basic web server on port 80.
 
-Start a new container based off the official NGINX image by running `docker run --name web1 -d -p 8080:80 nginx` on **node0**.
+Start a new container based off the official NGINX image by running `docker run --name web1 -d -p 8000:80 nginx` on **node0**.
 
 ```
-$ docker run --name web1 -d -p 8080:80 nginx
+$ docker run --name web1 -d -p 8000:80 nginx
 Unable to find image 'nginx:latest' locally
 latest: Pulling from library/nginx
 6d827a3ef358: Pull complete
@@ -364,19 +364,19 @@ Review the container status and port mappings by running `docker ps` on **node0*
 ```
 $ docker ps
 CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                           NAMES
-4e0da45b0f16        nginx               "nginx -g 'daemon ..."   2 minutes ago       Up 2 minutes        443/tcp, 0.0.0.0:8080->80/tcp   web1
+4e0da45b0f16        nginx               "nginx -g 'daemon ..."   2 minutes ago       Up 2 minutes        443/tcp, 0.0.0.0:8000->80/tcp   web1
 ```
 
-The top line shows the new **web1** container running NGINX. Take note of the command the container is running as well as the port mapping - `0.0.0.0:8080->80/tcp` maps port 8080 on all host interfaces to port 80 inside the **web1** container. This port mapping is what effectively makes the containers web service accessible from external sources (via the Docker hosts IP address on port 8080).
+The top line shows the new **web1** container running NGINX. Take note of the command the container is running as well as the port mapping - `0.0.0.0:8000->80/tcp` maps port 8000 on all host interfaces to port 80 inside the **web1** container. This port mapping is what effectively makes the containers web service accessible from external sources (via the Docker hosts IP address on port 8000).
 
 Now that the container is running and mapped to a port on a host interface you can test connectivity to the NGINX web server.
 
-To complete the following task you will need the IP address of your Docker host. This will need to be an IP address that you can reach (e.g. your lab is hosted in Azure so this will be the instance's Public IP - the one you SSH'd into). Just point your web browser to the IP and port 8080 of your Docker host. Also, if you try connecting to the same IP address on a different port number it will fail.
+To complete the following task you will need the IP address of your Docker host. This will need to be an IP address that you can reach (e.g. your lab is hosted in Azure so this will be the instance's Public IP - the one you SSH'd into). Just point your web browser to the IP and port 8000 of your Docker host. Also, if you try connecting to the same IP address on a different port number it will fail.
 
-If for some reason you cannot open a session from a web broswer, you can connect from your Docker host using the `curl 127.0.0.1:8080` command on **node0**.
+If for some reason you cannot open a session from a web broswer, you can connect from your Docker host using the `curl 127.0.0.1:8000` command on **node0**.
 
 ```
-$ curl 127.0.0.1:8080
+$ curl 127.0.0.1:8000
 <!DOCTYPE html>
 <html>
 <Snip>
@@ -785,6 +785,29 @@ $ docker service inspect myservice
 Towards the bottom of the output you will see the VIP of the service listed. The VIP in the output above is `10.10.10.2` but the value may be different in your setup. The important point to note is that the VIP listed here matches the value returned by the `ping -c5 myservice` command.
 
 Feel free to create a new `docker exec` session to the service task (container) running on **node1** and perform the same `ping -c5 service` command. You will get a response form the same VIP.
+
+## <a name="routingmesh"></a>Step 6: Test Routing Mesh
+
+Now let's create a service that utilizes Routing Mesh and the ingress network. Here you'll be creating a single task service that exposes port 5000 on the ingress network.
+
+```
+docker service create -p 5000:5000 --name pets --replicas=1 nicolaka/pets_web:1.0
+```
+
+Check which nodes did the task run.
+
+```
+ubuntu@node-0:~$ docker service ps pets
+ID            NAME    IMAGE                  NODE    DESIRED STATE  CURRENT STATE          ERROR  PORTS
+sqaa61qcepuh  pets.1  nicolaka/pets_web:1.0  node-0  Running        Running 4 minutes ago
+```
+
+You can see that the task is running on `node-0`, it could be `node-1` in your case. Regardless which node the task is running on, routing mesh make sure that you can connect to port `5000` on all cluster nodes and it will take care of forwarding the traffic to a healthy task. 
+
+Using your browser, go to the node where the task is NOT running on ( e.g `52.23.23.1:5000` where `52.23.23.1` is the IP of the node that the task is NOT running on).
+
+You still can see the app right? That's the power of Routing Mesh!
+
 
 ## Wrap Up
 
