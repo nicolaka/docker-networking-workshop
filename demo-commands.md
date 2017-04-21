@@ -19,27 +19,29 @@ $ docker run --rm -it --net host nginx
 
 # ip route 
 
-# curl localhost
+# ps aux
 
-$ netstat -plt
+$ netstat -plant
 
 $ curl localhost
 
 $ docker run --rm -it --net host centos sh
 
 #  curl localhost
-
-$ docker run --rm -it --net host nginx
 ```
 
 ### Demonstrate end to end packet flow of host mode network
 
 ```
-Host1 $ docker run -d --rm --net host chrch/netshoot netgen ip-172-31-18-122 5000
+Host1 $ docker run -d --rm --net host chrch/netshoot netgen 172.31.21.237 5000
 
-Host2 $ docker run -d --it --net host chrch/netshoot netgen ip-172-31-24-25 5000
+Host2 $ docker run -d -it --net host chrch/netshoot netgen 172.31.24.25 5000
 
-$ sudo tcpdump -vvvn -i eth0 port 5000
+$ docker exec -it <container> sh
+
+# tcpdump -Xn -i eth0 port 5000
+
+$ tcpdump -Xn -i eth0 port 5000
 ```
 
 ### Demonstrate port mapping
@@ -50,6 +52,8 @@ $ docker run -d -p 8000:80 nginx
 $ curl localhost:8000
 
 $ iptables -t nat -S | grep 8000
+
+$ iptables -nvL
 ```
 
 ### Explore bridge driver and namespace fundamentals
