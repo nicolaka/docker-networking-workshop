@@ -35,14 +35,14 @@ $ docker run --rm -it --net host centos sh
 ```
 $ docker exec -it <container> sh
 
-Host1 $ docker run -d --rm --net host chrch/netshoot netgen 10.0.18.212 5000
+Host1 $ docker run -d --rm --net host nicolaka/netshoot netgen 10.0.18.212 5000
 
-Host2 $ docker run -d -it --net host chrch/netshoot netgen 10.0.7.28 5000
+Host2 $ docker run -d -it --net host nicolaka/netshoot netgen 10.0.7.28 5000
 
 
-# tcpdump -Xn -i eth0 port 5000
+# tcpdump -nXs 0 -i eth0 port 5000
 
-$ tcpdump -Xn -i eth0 port 5000
+$ tcpdump -nXs 0 -i eth0 port 5000
 ```
 
 ### Demonstrate port mapping
@@ -92,9 +92,9 @@ $ docker rm -f $(docker ps -aq)
 ### Inspect traffic between containers on same host
 
 ```
-$ docker run -d --rm --net br --name c1 chrch/netshoot netgen c2 5000
+$ docker run -d --rm --net br --name c1 nicolaka/netshoot netgen c2 5000
 
-$ docker run -it --rm --net br --name c2 chrch/netshoot netgen c1 5000
+$ docker run -it --rm --net br --name c2 nicolaka/netshoot netgen c1 5000
 
 $ tcpdump -nXs 0 -i eth0 port 5000
 
@@ -107,9 +107,9 @@ $ tcpdump -nXs 0 -i veth18265bc port 5000
 
 ### Inspect traffic between containers on different 
 ```
-Host1 $ docker run -d --rm -p 5000:5000 chrch/netshoot netgen ip-172-31-18-122 5000
+Host1 $ docker run -d --rm -p 5000:5000 nicolaka/netshoot netgen ip-172-31-18-122 5000
 
-Host2 $ docker run -d --it -p 5000:5000 chrch/netshoot netgen ip-172-31-21-237 5000
+Host2 $ docker run -d --it -p 5000:5000 nicolaka/netshoot netgen ip-172-31-21-237 5000
 
 $  tcpdump -nXs 0 -i eth0 port 5000
 ```
