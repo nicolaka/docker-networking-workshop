@@ -11,10 +11,11 @@ You will get your hands dirty by going through examples of a few basic networkin
 > **Tasks**:
 > 
 > * [Prerequisites](#prerequisites)
-> * [Section #1 - Networking Basics](#task1)
-> * [Section #2 - Bridge Networking](#task2)
-> * [Section #3 - Overlay Networking](#task3)
-
+> * [Lab 1 Section #1 - Networking Basics](#task1)
+> * [Lab 1 Section #2 - Bridge Networking](#task2)
+> * [Lab 1 Section #3 - Overlay Networking](#task3)
+> * [Lab 2 Design Challenge](#lab2)
+> 
 ## Document conventions
 
 When you encounter a phrase in between `<` and `>`  you are meant to substitute in a different value. 
@@ -23,7 +24,7 @@ For instance if you see `docker service inspect <NAME>` you would actually type 
 
 ## <a name="prerequisites"></a>Prerequisites
 
-We'll be using [Play with Docker](play-with-docker.com) for the labs. You will need to add 3 instances. Instances will have private IP addresses. Remember that you only have 4 hours before the instances terminate. 
+We'll be using [Play with Docker](http://play-with-docker.com) for the labs. You will need to add 3 instances. Instances will have private IP addresses. Remember that you only have 4 hours before the instances terminate. 
 
 # <a name="lab1"></a>Lab #1
 # <a name="task1"></a>Section #1 - Networking Basics
@@ -348,9 +349,7 @@ CONTAINER ID        IMAGE               COMMAND                  CREATED        
 
 The top line shows the new **web1** container running NGINX. Take note of the command the container is running as well as the port mapping - `0.0.0.0:8000->80/tcp` maps port 8000 on all host interfaces to port 80 inside the **web1** container. This port mapping is what effectively makes the containers web service accessible from external sources (via the Docker hosts IP address on port 8000).
 
-Now that the container is running and mapped to a port on a host interface you can test connectivity to the NGINX web server.
-
-To complete the following task you will need the IP address of your Docker host. This will need to be an IP address that you can reach (e.g. your lab is hosted in Azure so this will be the instance's Public IP - the one you SSH'd into). Just point your web browser to the IP and port 8000 of your Docker host. Also, if you try connecting to the same IP address on a different port number it will fail.
+Now that the container is running and mapped to a port on a host interface you can test connectivity to the NGINX web server. You will see a new link marked `8000` in the Play with Docker portal. By clicking on it, you will be able to access the NGINX container.
 
 If for some reason you cannot open a session from a web broswer, you can connect from your Docker host using the `curl 127.0.0.1:8000` command on **node1**.
 
@@ -392,11 +391,8 @@ To add a worker to this swarm, run the following command:
 To add a manager to this swarm, run 'docker swarm join-token manager' and follow the instructions.
 ```
 
-If you haven't already done so, please create a new instance (`node2`)
+If you haven't already done so, please create a two new instance `node2` and `node3`.
 
-```
-$ ssh ubuntu@<node3 IP address>
-```
 
 Copy the entire `docker swarm join ...` command that is displayed as part of the output from your terminal output on **node1**. Then, paste the copied command into the terminal of **node2**.
 
@@ -412,8 +408,9 @@ Run a `docker node ls` on **node1** to verify that both nodes are part of the Sw
 ```
 $ docker node ls
 ID                           HOSTNAME  STATUS  AVAILABILITY  MANAGER STATUS
-ijjmqthkdya65h9rjzyngdn48    node3   Ready   Active
-rzyy572arjko2w0j82zvjkc6u *  node3   Ready   Active        Leader
+ijjmqthkdya65h9rjzyngdn48    node2   Ready   Active
+lb141l2410dalk9r5165gdnda    node3   Ready   Active
+rzyy572arjko2w0j82zvjkc6u *  node1   Ready   Active        Leader
 ```
 
 The `ID` and `HOSTNAME` values may be different in your lab. The important thing to check is that both nodes have joined the Swarm and are *ready* and *active*.
@@ -784,4 +781,39 @@ sqaa61qcepuh  pets.1  nicolaka/pets_web:1.0  node-0  Running        Running 4 mi
 You can see that the task is running on `node1` or `node2`. Regardless which node the task is running on, routing mesh make sure that you can connect to port `5000` on all cluster nodes and it will take care of forwarding the traffic to a healthy task. 
 
 You will notice that a the port 5000 was highlighted in your Play with Docker web portal. You can click on it and routing mesh will ensure that your application will be exposed on all nodes. Regardless if the application is running on that node or not. That's the power of Routing Mesh!
+
+
+# <a name="lab2"></a>Lab #2
+
+Your task in this section will be to take an existing application and change some aspects of it to get networking working properly.
+Here is the application that we will be working with:
+
+```
+version: '3.3'
+services:
+    A:
+        image: nicolaka/netshoot
+        deploy:
+            replicas: 2
+        tty: true
+    B:
+        image: nicolaka/netshoot
+        deploy:
+            mode: global
+        tty: true
+    C:
+        image: nicolaka/netshoot
+        tty: true
+```
+
+`nicolaka/netshoot` is a simple container that contains network inspection tools. This application has no functional purpose but will be helpful to understand how some of the fundamental Docker networking concepts tie together.
+
+### Networking Requirements
+- Service A and B should be able to communicate
+- Service B and C should be able to communicate, though the network traffic should be encrypted
+- Service A and C should not be able to communicate
+- Service A should be exposed externally, ingress traffic to A should be load balanced across its replicas evenly
+- Service B should be exposed externally. B is scheduled in "global" mode so one replica will exist on each node. Ingress traffic to a B container should only go to that container and should not be load balanced.
+
+### Good Luck!
 
