@@ -809,11 +809,11 @@ services:
 `nicolaka/netshoot` is a simple container that contains network inspection tools. This application has no functional purpose but will be helpful to understand how some of the fundamental Docker networking concepts tie together.
 
 ### Networking Requirements
-- Service A and B should be able to communicate
-- Service B and C should be able to communicate, though the network traffic should be encrypted
+- Service A and B should be able to communicate. They should use the 10.1.100.0/24 subnet.
+- Service B and C should be able to communicate, though the network traffic should be encrypted. They should use the 10.1.200.0/24 subnet.
 - Service A and C should not be able to communicate
-- Service A should be exposed externally, ingress traffic to A should be load balanced across its replicas evenly
-- Service B should be exposed externally. B is scheduled in "global" mode so one replica will exist on each node. Ingress traffic to a B container should only go to that container and should not be load balanced.
+- Service A should be exposed externally on TCP port 8001, the container listens on port 80.  external traffic to A should be load balanced across its replicas evenly
+- Service B should be exposed externally on TCP port 8002, the container listens on port 80. B is scheduled in "global" mode so one replica will exist on each node. External traffic to a B container should only go to that container and should not be load balanced.
 
 ### Good Luck!
 
