@@ -2,11 +2,11 @@
 
 Hi, welcome to the Docker Networking Workshop!
 
-You will get your hands dirty by going through examples of a few basic networking concepts, learn about Bridge and Overlay networking, load-balancing, service discovery and more!
+You will get your hands dirty by going through examples of a few basic networking concepts, learn about Bridge and Overlay networking, load-balancing, service discovery and a networking design challenge!
 
 > **Difficulty**: Beginner to Intermediate
 
-> **Time**: 1 hour
+> **Time**: 90 minutes
 
 > **Tasks**:
 > 
@@ -376,10 +376,10 @@ If you try and curl the IP address on a different port number it will fail.
 
 In this step you'll initialize a new Swarm, join a single worker node, and verify the operations worked.
 
-Run `docker swarm init` on **node1**.
+Run `docker swarm init` on **node1**. You may need to specify `listen-addr` to be the IP address of the node. 
 
 ```
-$ docker swarm init
+$ docker swarm init --listen-addr <IP>
 Swarm initialized: current node (rzyy572arjko2w0j82zvjkc6u) is now a manager.
 
 To add a worker to this swarm, run the following command:
@@ -394,7 +394,7 @@ To add a manager to this swarm, run 'docker swarm join-token manager' and follow
 If you haven't already done so, please create a two new instance `node2` and `node3`.
 
 
-Copy the entire `docker swarm join ...` command that is displayed as part of the output from your terminal output on **node1**. Then, paste the copied command into the terminal of **node2**.
+Copy the entire `docker swarm join ...` command that is displayed as part of the output from your terminal output on **node1**. Then, paste the copied command into the terminal of **node2** and **node3**.
 
 ```
 $ docker swarm join \
@@ -534,7 +534,7 @@ a7449465c379        host                host                local
 wlqnvajmmzsk        overnet             overlay             swarm
 ```
 
-We can also run `docker network inspect overnet` on **node3** to get more detailed information about the "overnet" network and obtain the IP address of the task running on **node2**.
+We can also run `docker network inspect overnet` on **node2** to get more detailed information about the "overnet" network and obtain the IP address of the task running on **node2**.
 
 ```
 $ docker network inspect overnet
